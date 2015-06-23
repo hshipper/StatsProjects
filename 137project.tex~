@@ -1,0 +1,53 @@
+\documentclass[twoside,12pt]{article}
+\usepackage{graphicx}
+\graphicspath{{~/}}
+\usepackage{fullpage}
+\usepackage{longtable}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+\title{Lake Shasta's Diminishing Storage Levels \\ STA 137 Final Project}
+\author{Henry Shipper \\ 996962278}
+\date{March 8, 2015}
+
+\begin{document}
+
+\maketitle
+\pagebreak
+\part{Abstract}
+In this project I examine historical levels of water storage in Lake Shasta. This is done by decomposing the levels into seasonal, drift, and residual components by means of differencing. Through the insight gained from these analyses I then attempt to forecast future reservoir levels and demonstrate that Calfornia's lower water reservoir levels are representative of a long-term trend of increasingly depleting the state's resources.
+
+\part{Introduction}
+ Lake Shasta is the largest reservoir in California, with a total capacity of 4,552,000 acre-feet. However, the most recent measurement (2,612,715 as of February 2015) still falls well below the historical average, at just 58\%.\footnote{\url{http://cdec.water.ca.gov/cgi-progs/reservoirs/RES}} \\ \\
+The amount of water available to the state of California has tremendous impacts. As water becomes more scarce, it becomes more expensive for households, restaurants, and most importantly for the Californian economy, it becomes more expensive for agriculture. Being able to predict how much water will be available would provide a number of useful applications, including helping farmers plan for upcoming seasons and helping households predict how much water they will be able to use.\\ \\
+Throughout this report, I will be examining how the volume of water stored has varied over time and how we can use it to help predict how much water will be in the reservoir in future years. Should we continue using the water at the pace we are (and enduring similar dry years), this could even provide us with a finite time at which the reservoir will be depleted.\\ \\
+In the following sections I will explain how I have decomposed the data into drift, seasonal, and residual components, forecast the next few years, and then discussing my findings as well as providing analysis on what could have improved my modeling.\\ 
+\part{Introducing the Data}
+This data was retrieved from the California Data Exchange Center, a part of the California Department of Water Resources \footnote{URL in Appendix}. The specific dataset used for this project was pulled using the XML package for R. This tab
+le contains monthly recordings of the storage level of the Shasta Dam Reservoir, refered to in short as SHA by the Department of Water Resources. The table provides the monthly recording of volume of water in the reservoir in acre-feet (AF) from January, 1960 through January, 2015. The time series plot of the data can be seen below. Before we get to the graph, however, one note must be made about the data: there was no recorded measurement for January, 1970. To remove the issue of having missing data, I did fit an autoregressive model on the previous year's worth of data as well as on the following year's worth of data and averaged the two predictions given from each to find an appropriate estimate for it. Onto the time series plot.\\
+\begin{center}
+\includegraphics[width=0.8\textwidth,natwidth=843,natheight=408]{ts_full.png}
+\end{center}
+Upon first inspection, a few things stand out about the data. Firstly, around 1976 we start to see significantly more instances where the recorded storage is below the historical average (which itself is brought down significantly by the year 1977, when storage hit an all-time low of 578,000 AF). Despite the increasing magnitude and number of instances of differences below the historical average, the maximum measured storage level does not seem to vary significantly, which makes sense --- after all, the reservoir has a limited capacity. As a result of the increasing number of instances that dip below the average, the variance of this dataset does not remain constant, so it must be transformed to reduce the difference in variance. I chose the natural log of the data, as neither the square nor cube root of the data seemed to even the variance quite as well.\\
+\begin{center}
+\includegraphics[width=0.8\textwidth,natwidth=843,natheight=408]{log_lag.png}
+\end{center}
+As we can see from the difference graph, the change from month-to-month seems to be reasonably constant after the log transformation. Given that we are now happy with the look of the data, we can move onto decomposition.\\
+\part{Data Analysis}
+Time series observations are classically broken into three distinct parts: Seasonality, which accounts for cyclical effects; Drift, which accounts for long term trends; and residual effects, which encompass everything else. The model can be written mathematically as:\begin{center}$Y_{t} = m_{t} + s_{t} + X_{t}$
+\end{center}
+Where $Y_{t}$ represents our observations, $m_{t}$ represents our drift component, $s_{t}$ represents our seasonal component, and $X_{t}$ represents the residual effects. \\
+I chose to employ a weighted average method to eliminate the seasonality component from the model. I created an initial 2-sided moving average\begin{center} $\hat m_{t} = \sum_{-6}^6 \frac{1}{12}*(.5t_{-6} + t_{-5} + ... + t_{5} + .5t_{6})$\end{center} and then constructed seasonality estimates by first averaging distance from the moving average for each month:\begin{center} $\mu_{k} = \frac{1}{54}\sum_{j=2}^{55}(Y_{k+d(j-1)} - \hat m_{k+d(j-1)}) \hspace{20 mm} k = 1,\ldots,6$ \\
+$\mu_{k} = \frac{1}{54}\sum_{j=1}^{54}(Y_{k+d(j-1)} - \hat m_{k+d(j-1)}) \hspace{20 mm} k = 7,\ldots,12$\end{center}
+We then subtract the average of the generated $mu$'s from each $mu_{k}$ to center the seasonality effect around $0$.\begin{center} $\hat s_{k} = mu_{k} - \frac{1}{12}\sum_{l=1}^{12}mu_{l}$.\end{center}
+\pagebreak Here are the generated seasonality effects:
+\begin{center}
+\begin{table}[ht]
+\begin{tabular}{lllllllllllll}
+  \hline
+Jan & Feb & Mar & Apr & May & Jun \\ -0.026834 & 0.054091 & 0.166567 & 0.224858 & 0.212726 & 0.137789 \\ \hline Jul & Aug & Sep & Oct & Nov & Dec \\ 0.006302 & -0.119357 & -0.173831 & -0.186021 & -0.174243 & -0.116776 \\ 
+   \hline
+\end{tabular}
+\end{table}
+\includegraphics[width=0.8\textwidth,natwidth=843,natheigt=610]
+\end{center}
+As we look at the graph of the time series before and after deseasonalizing, it appears that there is still some periodic trending occuring, though not to the same degree as before.
+\end{document}
